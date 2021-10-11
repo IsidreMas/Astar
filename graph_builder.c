@@ -1,46 +1,240 @@
-// zip.c file
-#include <stdio.h>
-#include <stdlib.h>
-#include <zip.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
 
-int main(int argc, char **argv) {
-struct zip *zip_file;
-struct zip_file *file_in_zip;
-int err;
-int files_total;
-int file_number;
-int r;
-char buffer[10000];
+# define MAXSUCCESSORS 9
 
-if (argc < 3) {
-    fprintf(stderr,"usage: %s <zipfile> <fileindex>\n",argv[0]);
-    return -1;
-};
+typedef struct{
+    char *wayname; // Street Id (could be the name)
+    unsigned long nodeposition; // Position in nodes vector of the destination of the successors
+}successorsinfo;
 
-zip_file = zip_open(argv[1], 0, &err);
-if (!zip_file) {
-    fprintf(stderr,"Error: can't open file %s\n",argv[1]);
-    return -1;
-};
+typedef struct {
+unsigned long id; // Node identification
+char *name;
+double latitude, longitude; // Node position
+unsigned short nsucc; // Number of node successors; i. e. length of successors
+successorsinfo successors[MAXSUCCESSORS];
+} node;
 
-file_number = atoi(argv[2]);
-files_total = zip_get_num_files(zip_file);
-if (file_number > files_total) {
-    printf("Error: we have only %d files in ZIP\n",files_total);
-    return -1;
-};
+unsigned long binarysearch(unsigned long ident, node l[],int n, unsigned long max_id);
 
-file_in_zip = zip_fopen_index(zip_file, file_number, 0);
-if (file_in_zip) {
-    while ( (r = zip_fread(file_in_zip, buffer, sizeof(buffer))) > 0) {
-        printf("%s",buffer);
-    };
-    zip_fclose(file_in_zip);
-} else {
-    fprintf(stderr,"Error: can't open file %d in zip\n",file_number);
-};
+char* strtoke(char *str, const char *delim)
+{
+  static char *start = NULL; /* stores string str for consecutive calls */
+  char *token = NULL; /* found token */
+  /* assign new start in case */
+  if (str) start = str;
+  /* check whether text to parse left */
+  if (!start) return NULL;
+  /* remember current start as found token */
+  token = start;
+  /* find next occurrence of delim */
+  start = strpbrk(start, delim);
+  /* replace delim with terminator and move start to follower */
+  if (start) *start++ = '\0';
+  /* done */
+  return token;
+}
 
-zip_close(zip_file);
+void ExitError(const char *miss, int errcode)
+{
+    fprintf (stderr, "\nERROR: %s.\nStopping...\n\n", miss);
+    exit(errcode);
+}
 
-return 0;
-};
+int main(int argc, char *argv[]){
+    FILE *nodesdata;
+    node *nodes;
+    unsigned int field;
+    int nnodes=0,i,buffer_length;
+    char buffer[79858], *pch;
+    
+    nodesdata=fopen("maps_data/cataluna.csv","r");
+    if(nodesdata==NULL)
+    {
+        printf("\nWe cannot acces to the nodes data file\n");
+        return 1;
+    }
+    // We count the number of nodes
+
+    while(fgets(buffer, sizeof(buffer), nodesdata))
+    {
+        pch = strtoke(buffer,"|");
+        if (strcmp(pch, (char *)"node") == 0) {
+            nnodes++;
+        }
+    }
+
+    rewind(nodesdata);
+    // We reserve the memory for the nodes
+    if((nodes=(node *)malloc(nnodes*sizeof(node)))==NULL)
+    {
+        printf("Error in the memory allocation of nodes.\n");
+        return 2;
+    }
+
+    do
+    {
+        fgets(buffer, sizeof(buffer), nodesdata); 
+        pch = strtoke(buffer,"|");
+    }while(strcmp(pch, (char *)"node") != 0);
+
+    // We read the data in the nodes file and store it in the vector nodes.
+    for(i=0;i<nnodes;i++)
+    {
+        field = 1;
+        while (pch != NULL)
+        {
+            if(field == 2)nodes[i].id = strtoul(pch,(char **)NULL, 10);
+            if(field == 3)nodes[i].name = pch;
+            if(field == 10)nodes[i].latitude = atof(pch);
+            if(field == 11)nodes[i].longitude = atof(pch);
+            field++;
+            pch = strtoke(NULL, "|");
+        }
+        nodes[i].nsucc=0;
+        fgets(buffer, sizeof(buffer), nodesdata);
+        if(i==nnodes-1)buffer_length=strlen(buffer);
+        pch = strtoke(buffer,"|");
+    }
+
+    fseek(nodesdata, -buffer_length, SEEK_CUR);
+
+    // Now we have to read the nodes of the street and keep two in memory: previousnodeid and nodeid.
+    unsigned long nodeid, previousnodeid, wayid, max_id = nodes[nnodes-1].id+1, previousnode, previousnodeposition;
+    int flag, oneway;
+    char *wayname;
+
+    while(strcmp(pch, (char *)"way") == 0)
+    {
+        flag = 1;
+        field = 1;
+        oneway = 0;
+        while (pch != NULL)
+        {
+            if(field == 2)wayid = strtoul(pch,(char **)NULL, 10);
+            if(field == 3)wayname = pch;
+            if(field == 8)if(strcmp(pch, (char *)"oneway")==0)oneway = 1;
+            if(field >= 10)
+            {   
+                if(flag==1)
+                {
+                    flag = 0;
+                    previousnodeid = strtoul(pch,(char **)NULL, 10);
+                    if((previousnodeposition = binarysearch(previousnodeid, nodes, nnodes, max_id)) == max_id)
+                    {
+                        //printf("Non existing node 1\n");
+                        flag = 1;
+                        field++;
+                        pch = strtoke(NULL, "|");
+                        continue;
+                    }
+                    field++;
+                    pch = strtoke(NULL, "|");
+                    if (pch == NULL)break;// ways with just one node are discarded automatically because field=11 is NULL
+                }
+                nodeid = strtoul(pch,(char **)NULL, 10);
+                if((previousnode = binarysearch(nodeid, nodes, nnodes, max_id)) == max_id)
+                {
+                    //printf("Non existing node 2\n");
+                    flag = 1;
+                    field++;
+                    pch = strtoke(NULL, "|");
+                    continue;
+                }
+
+                if(flag == 0)
+                {
+                    for(i=0;i<nodes[previousnodeposition].nsucc;i++)
+                    {
+                        if(nodes[previousnodeposition].successors[i].nodeposition==previousnode)flag = 1;
+                    }
+                    if(flag == 0)
+                    {
+                        nodes[previousnodeposition].successors[nodes[previousnodeposition].nsucc].nodeposition = previousnode;
+                        nodes[previousnodeposition].successors[nodes[previousnodeposition].nsucc].wayname = wayname;
+                        nodes[previousnodeposition].nsucc++;
+                    }
+                    if(oneway == 0)
+                    {
+                        for(i=0;i<nodes[previousnode].nsucc;i++)
+                        {
+                            if(nodes[previousnode].successors[i].nodeposition==previousnodeposition)flag = 1;
+                        }
+                        if(flag == 0)
+                        {
+                            nodes[previousnode].successors[nodes[previousnode].nsucc].nodeposition=previousnodeposition;
+                            nodes[previousnode].successors[nodes[previousnode].nsucc].wayname = wayname;
+                            nodes[previousnode].nsucc++;
+                        }
+                    }
+                    previousnodeposition=previousnode;
+                    flag = 0;
+                }
+
+            }
+            field++;
+            pch = strtoke(NULL, "|");
+        }
+        fgets(buffer, sizeof(buffer), nodesdata);
+        pch = strtoke(buffer,"|");
+    }
+
+    fclose(nodesdata);
+    // Let's show the result
+    printf("Printing the result of reading the nodes file:\n");
+    for(i=1;i<nnodes;i++){
+        if(nodes[i-1].id>nodes[i].id)printf("FAIL");
+        //printf("Id=%010ld Lat=%lf Long=%lf\n",nodes[i].id,nodes[i].latitude,nodes[i].longitude);
+    }
+    
+    // We print the nodes with at least one successors to control if it works
+    printf("Printing the nodes with at least one successors:\n");
+    for(i=0;i<nnodes;i++){
+        if(nodes[i].nsucc != 0){
+            //printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d\n",nodes[i].id,nodes[i].latitude,nodes[i].longitude,nodes[i].nsucc);
+        }
+    }
+
+    // Writing the binary file to be used in the Astar.c program
+
+    FILE *fin;
+    // Computing the total number of successors
+    unsigned long ntotnsucc=0UL;
+    for(i=0; i < nnodes; i++) ntotnsucc += nodes[i].nsucc;
+
+    if ((fin = fopen ("Graph.bin", "wb")) == NULL)
+    ExitError("the output binary data file cannot be opened", 31);
+    //Global data −−− header
+    if( fwrite(&nnodes, sizeof(unsigned long), 1, fin) + fwrite(&ntotnsucc, sizeof(unsigned long), 1, fin) != 2 )
+    ExitError("when initializing the output binary data file", 32);
+    //Writing all nodes
+    if( fwrite(nodes, sizeof(node), nnodes, fin) != nnodes )
+    ExitError("when writing nodes to the output binary data file", 32);
+    //Writing sucessors in blocks
+    for(i=0; i < nnodes; i++) if(nodes[i].nsucc)
+    {
+        if( fwrite(nodes[i].successors, sizeof(unsigned long), nodes[i].nsucc, fin) !=
+        nodes[i].nsucc )
+        ExitError("when writing edges to the output binary data file", 32);
+    }
+    fclose(fin);
+
+    return 0;
+}
+
+unsigned long binarysearch(unsigned long ident, node l[],int n, unsigned long max_id)
+{
+    unsigned long middle, start = 0, end = n-1;
+    while (start <= end){
+      middle = start + (end- start)/2;
+      if (l[middle].id == ident)
+         return middle;
+      if (l[middle].id < ident)
+         start = middle + 1;
+      else
+         end = middle - 1;
+   }
+   return max_id;
+}
