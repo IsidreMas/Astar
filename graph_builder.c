@@ -12,42 +12,21 @@ typedef struct{
 typedef struct {
 unsigned long id; // Node identification
 char *name;
-double latitude, longitude; // Node position
+double lat, lon; // Node position
 unsigned short nsucc; // Number of node successors; i. e. length of successors
 successorsinfo successors[MAXSUCCESSORS];
 } node;
 
-unsigned long binarysearch(unsigned long ident, node l[],int n, unsigned long max_id);
+unsigned long binarysearch(unsigned long ident, node l[],int n, unsigned long max_id); // Performs a binary search.
 
-char* strtoke(char *str, const char *delim)
-{
-  static char *start = NULL; /* stores string str for consecutive calls */
-  char *token = NULL; /* found token */
-  /* assign new start in case */
-  if (str) start = str;
-  /* check whether text to parse left */
-  if (!start) return NULL;
-  /* remember current start as found token */
-  token = start;
-  /* find next occurrence of delim */
-  start = strpbrk(start, delim);
-  /* replace delim with terminator and move start to follower */
-  if (start) *start++ = '\0';
-  /* done */
-  return token;
-}
+char* strtoke(char *str, const char *delim); // Works as strtok() but returns an empty string (instead of NULL) when the field is empty.
 
-void ExitError(const char *miss, int errcode)
-{
-    fprintf (stderr, "\nERROR: %s.\nStopping...\n\n", miss);
-    exit(errcode);
-}
+void ExitError(const char *miss, int errcode); // Handles errors and exits the program in case of one.
 
 int main(int argc, char *argv[]){
     FILE *nodesdata;
     node *nodes;
-    unsigned int field;
-    int nnodes=0,i,buffer_length;
+    unsigned long nnodes=0,i,buffer_length, field;
     char buffer[79858], *pch;
     
     nodesdata=fopen("maps_data/cataluna.csv","r");
@@ -88,8 +67,8 @@ int main(int argc, char *argv[]){
         {
             if(field == 2)nodes[i].id = strtoul(pch,(char **)NULL, 10);
             if(field == 3)nodes[i].name = pch;
-            if(field == 10)nodes[i].latitude = atof(pch);
-            if(field == 11)nodes[i].longitude = atof(pch);
+            if(field == 10)nodes[i].lat = atof(pch);
+            if(field == 11)nodes[i].lon = atof(pch);
             field++;
             pch = strtoke(NULL, "|");
         }
@@ -103,7 +82,7 @@ int main(int argc, char *argv[]){
 
     // Now we have to read the nodes of the street and keep two in memory: previousnodeid and nodeid.
     unsigned long nodeid, previousnodeid, wayid, max_id = nodes[nnodes-1].id+1, previousnode, previousnodeposition;
-    int flag, oneway;
+    short flag, oneway;
     char *wayname;
 
     while(strcmp(pch, (char *)"way") == 0)
@@ -124,7 +103,6 @@ int main(int argc, char *argv[]){
                     previousnodeid = strtoul(pch,(char **)NULL, 10);
                     if((previousnodeposition = binarysearch(previousnodeid, nodes, nnodes, max_id)) == max_id)
                     {
-                        //printf("Non existing node 1\n");
                         flag = 1;
                         field++;
                         pch = strtoke(NULL, "|");
@@ -137,7 +115,6 @@ int main(int argc, char *argv[]){
                 nodeid = strtoul(pch,(char **)NULL, 10);
                 if((previousnode = binarysearch(nodeid, nodes, nnodes, max_id)) == max_id)
                 {
-                    //printf("Non existing node 2\n");
                     flag = 1;
                     field++;
                     pch = strtoke(NULL, "|");
@@ -186,14 +163,15 @@ int main(int argc, char *argv[]){
     printf("Printing the result of reading the nodes file:\n");
     for(i=1;i<nnodes;i++){
         if(nodes[i-1].id>nodes[i].id)printf("FAIL");
-        //printf("Id=%010ld Lat=%lf Long=%lf\n",nodes[i].id,nodes[i].latitude,nodes[i].longitude);
+
+        //printf("Id=%010ld Lat=%lf Long=%lf\n",nodes[i].id,nodes[i].lat,nodes[i].lon);
     }
     
     // We print the nodes with at least one successors to control if it works
     printf("Printing the nodes with at least one successors:\n");
     for(i=0;i<nnodes;i++){
         if(nodes[i].nsucc != 0){
-            //printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d\n",nodes[i].id,nodes[i].latitude,nodes[i].longitude,nodes[i].nsucc);
+            //printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu Name=%s\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[nodes[i].nsucc-1].nodeposition, nodes[i].name);
         }
     }
 
@@ -202,23 +180,27 @@ int main(int argc, char *argv[]){
     FILE *fin;
     // Computing the total number of successors
     unsigned long ntotnsucc=0UL;
+
     for(i=0; i < nnodes; i++) ntotnsucc += nodes[i].nsucc;
 
     if ((fin = fopen ("Graph.bin", "wb")) == NULL)
     ExitError("the output binary data file cannot be opened", 31);
+    printf("%lu", nnodes);
     //Global data −−− header
     if( fwrite(&nnodes, sizeof(unsigned long), 1, fin) + fwrite(&ntotnsucc, sizeof(unsigned long), 1, fin) != 2 )
     ExitError("when initializing the output binary data file", 32);
+
     //Writing all nodes
     if( fwrite(nodes, sizeof(node), nnodes, fin) != nnodes )
     ExitError("when writing nodes to the output binary data file", 32);
-    //Writing sucessors in blocks
+
+    /*//Writing sucessors in blocks
     for(i=0; i < nnodes; i++) if(nodes[i].nsucc)
     {
         if( fwrite(nodes[i].successors, sizeof(unsigned long), nodes[i].nsucc, fin) !=
         nodes[i].nsucc )
         ExitError("when writing edges to the output binary data file", 32);
-    }
+    }*/
     fclose(fin);
 
     return 0;
@@ -237,4 +219,28 @@ unsigned long binarysearch(unsigned long ident, node l[],int n, unsigned long ma
          end = middle - 1;
    }
    return max_id;
+}
+
+char* strtoke(char *str, const char *delim)
+{
+  static char *start = NULL; /* stores string str for consecutive calls */
+  char *token = NULL; /* found token */
+  /* assign new start in case */
+  if (str) start = str;
+  /* check whether text to parse left */
+  if (!start) return NULL;
+  /* remember current start as found token */
+  token = start;
+  /* find next occurrence of delim */
+  start = strpbrk(start, delim);
+  /* replace delim with terminator and move start to follower */
+  if (start) *start++ = '\0';
+  /* done */
+  return token;
+}
+
+void ExitError(const char *miss, int errcode)
+{
+    fprintf (stderr, "\nERROR: %s.\nStopping...\n\n", miss);
+    exit(errcode);
 }
