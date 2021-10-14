@@ -55,7 +55,7 @@ int main (int argc, char *argv[])
     printf("Printing the nodes with at least one successors:\n");
     for(i=0;i<nnodes;i++){
         if(nodes[i].nsucc != 0){
-            printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu Street=%s\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[nodes[i].nsucc-1].nodeposition, nodes[i].successors[nodes[i].nsucc -1].wayname);
+            printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[2].nodeposition);
         }
     }
 

@@ -46,27 +46,24 @@ int main(int argc, char *argv[]){
     }
 
     rewind(nodesdata);
-    // We reserve the memory for the nodes
+    // Reserve the memory for the nodes.
     if((nodes=(node *)malloc(nnodes*sizeof(node)))==NULL)
-    {
-        printf("Error in the memory allocation of nodes.\n");
-        return 2;
-    }
-
+        ExitError("in the memory allocation of nodes", 32);
+    // Skip the first lines that are not nodes.
     do
     {
         fgets(buffer, sizeof(buffer), nodesdata); 
         pch = strtoke(buffer,"|");
     }while(strcmp(pch, (char *)"node") != 0);
 
-    // We read the data in the nodes file and store it in the vector nodes.
+    // Read the data in the nodes lines and store it in the vector nodes.
     for(i=0;i<nnodes;i++)
     {
         field = 1;
         while (pch != NULL)
         {
             if(field == 2)nodes[i].id = strtoul(pch,(char **)NULL, 10);
-            if(field == 3)nodes[i].name = pch;
+            if(field == 3)nodes[i].name = pch; //This needs to be fixed!!
             if(field == 10)nodes[i].lat = atof(pch);
             if(field == 11)nodes[i].lon = atof(pch);
             field++;
@@ -78,11 +75,11 @@ int main(int argc, char *argv[]){
         pch = strtoke(buffer,"|");
     }
 
-    fseek(nodesdata, -buffer_length, SEEK_CUR);
+    fseek(nodesdata, -buffer_length, SEEK_CUR); // Rewinds the last line read from the file.
 
     // Now we have to read the nodes of the street and keep two in memory: previousnodeid and nodeid.
     unsigned long nodeid, previousnodeid, wayid, max_id = nodes[nnodes-1].id+1, previousnode, previousnodeposition;
-    short flag, oneway;
+    short flag, oneway; //This are flags to deal with the inconsistencies in the file and reproduce the successors in twoway roads.
     char *wayname;
 
     while(strcmp(pch, (char *)"way") == 0)
@@ -162,7 +159,7 @@ int main(int argc, char *argv[]){
     // Let's show the result
     printf("Printing the result of reading the nodes file:\n");
     for(i=1;i<nnodes;i++){
-        if(nodes[i-1].id>nodes[i].id)printf("FAIL");
+        if(nodes[i-1].id>nodes[i].id)printf("FAIL");//This checks that the ID's are sorted (necessary to perform binary search)
 
         //printf("Id=%010ld Lat=%lf Long=%lf\n",nodes[i].id,nodes[i].lat,nodes[i].lon);
     }
