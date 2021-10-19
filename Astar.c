@@ -16,11 +16,21 @@ fprintf (stderr, "\nERROR: %s.\nStopping...\n\n", miss); exit(errcode);
 
 int main (int argc, char *argv[])
 {
+    if(argc != 2)
+    {
+        printf("\nUsage: ./graph_builder 'GRAPH_BINARY_FILE'\n");
+        ExitError("The argument expected was not given", 32);
+    }
+
     FILE *fin;
     unsigned long nnodes, ntotnsucc, ntotnamechar, *allsuccessors,  i;
     char *allnames;
     node *nodes;
-    if ((fin = fopen ("Graph.bin", "rb")) == NULL)
+    unsigned long valence[10];
+
+    for(i=0UL;i<10;i++)valence[i]=0UL;
+
+    if ((fin = fopen (argv[1], "rb")) == NULL)
         ExitError("the data file does not exist or cannot be opened", 11);
     /* Global data −−− header */
     if( fread(&nnodes, sizeof(unsigned long), 1, fin) + fread(&ntotnsucc, sizeof(unsigned long), 1, fin) + fread(&ntotnamechar, sizeof(unsigned long), 1, fin) != 3 )
@@ -55,9 +65,16 @@ int main (int argc, char *argv[])
         printf("Printing the nodes with at least one successors:\n");
         for(i=0;i<nnodes;i++){
             if(nodes[i].nsucc != 0 && strcmp(nodes[i].name, (char*)"")){
-                printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu Name=%s\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[0], nodes[i].name);
+                //printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu Name=%s\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[0], nodes[i].name);
             }
         }
+    for(i=0;i<nnodes;i++){
+        //if(nodes[i-1].id>nodes[i].id)
+            //ExitError("The nodes id's are not sorted in ascending order. That's necessary to perform binary search.", 32);//This checks that the ID's are sorted (necessary to perform binary search)
+        valence[nodes[i].nsucc]++;
+    }
+
+    for(i=0UL;i<10;i++)printf("%lu nodes have valence %lu\n",valence[i], i);
 
 
     return 0;

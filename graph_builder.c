@@ -2,6 +2,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <stdbool.h>
+# include <time.h>
 
 # define MAXCHARSLINE 79857
 
@@ -25,16 +26,29 @@ void ExitError(const char *miss, int errcode);
 int main(int argc, char *argv[]){
     FILE *nodesdata;
     node *nodes;
+    clock_t local_time, global_time;
     unsigned long nnodes=0UL,i, field;
     char buffer[MAXCHARSLINE], *pch;
+    double local_CPU_time, global_CPU_time;
+    unsigned short nsucc_max = 0U;
+
+    if(argc != 3)
+    {
+        printf("\nUsage: ./graph_builder 'PATH_TO_NODES_DATAFILE' 'NAME_OUTPUT_BINARY_FILE'\n");
+        ExitError("Some arguments of the two expected were not given", 32);
+    }
     
-    nodesdata=fopen("maps_data/cataluna.csv","r");
+    printf("Opening %s\n\n", argv[1]);
+    global_time=clock();
+    nodesdata=fopen(argv[1],"r");
     if(nodesdata==NULL)
     {
         ExitError("Couldn't acces the nodes data file", 32);
     }
-    
+    printf("Counting nodes...\n");
     // Counts the number of nodes
+    local_time = clock();
+    global_time = clock();
     while(fgets(buffer, sizeof(buffer), nodesdata))
     {
         pch = strtoke(buffer,"|");
@@ -42,11 +56,13 @@ int main(int argc, char *argv[]){
         else if(strcmp(pch, (char *)"way") == 0)break;
     }
     rewind(nodesdata);
-
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("%lu nodes were found in %f CPU seconds.\n\n", nnodes, local_CPU_time);
+    printf("Allocating memory for nodes and reading node lines...\n");
+    local_time = clock();
     // Reserves the memory for the nodes.
     if((nodes=(node *)malloc(nnodes*sizeof(node)))==NULL)
         ExitError("Couldn't allocate the memory for nodes", 32);
-
     // Skips the first lines that are not nodes.
     do
     {
@@ -60,7 +76,12 @@ int main(int argc, char *argv[]){
         field = 1UL;
         while (pch != NULL)
         {
-            if(field == 2UL)nodes[i].id = strtoul(pch,(char **)NULL, 10);
+            if(field == 2UL)
+            {
+                nodes[i].id = strtoul(pch,(char **)NULL, 10);
+                if(i>0 && nodes[i-1].id>nodes[i].id)
+                    ExitError("The nodes id's are not sorted in ascending order. That's necessary to perform binary search.", 32);
+            }
             if(field == 3UL)
             {   
                 if((nodes[i].name = (char *) malloc(strlen(pch)*sizeof(char))) == NULL)
@@ -79,7 +100,10 @@ int main(int argc, char *argv[]){
         fgets(buffer, sizeof(buffer), nodesdata);
         pch = strtoke(buffer,"|");
     }
-
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("The node lines were read in %f CPU seconds.\n\n", local_CPU_time);
+    printf("Reading way lines and assigning node successors...\n");
+    local_time = clock();
     // Reads the consecutive nodes of the way lines and keep two in memory: previousnodeindex and nodeindex.
     unsigned long nodeid, previousnodeid, nodeindex, previousnodeindex;
     bool first_node, repeated_node, oneway; //This are flags to deal with the inconsistencies in the file and reproduce the successors in twoway roads.
@@ -116,7 +140,7 @@ int main(int argc, char *argv[]){
             nodeid = strtoul(pch,(char **)NULL, 10);
             if(!binarysearch(nodeid, nodes, nnodes, &nodeindex))
             {
-                first_node = true;
+                //first_node = true; // If A|B and B|C then A|C if B is missing. Uncomment to deactivate.
                 field++;
                 pch = strtoke(NULL, "|");
                 continue;
@@ -132,6 +156,7 @@ int main(int argc, char *argv[]){
                     ExitError("Couldn't reallocate the memory for successors", 32);
                 nodes[previousnodeindex].successors[nodes[previousnodeindex].nsucc] = nodeindex;
                 nodes[previousnodeindex].nsucc++;
+                if(nodes[previousnodeindex].nsucc > nsucc_max)nsucc_max=nodes[previousnodeindex].nsucc;
             }
             if(!oneway)
             {
@@ -146,6 +171,7 @@ int main(int argc, char *argv[]){
                     ExitError("Couldn't reallocate the memory for successors", 32);
                     nodes[nodeindex].successors[nodes[nodeindex].nsucc]=previousnodeindex;
                     nodes[nodeindex].nsucc++;
+                    if(nodes[nodeindex].nsucc > nsucc_max)nsucc_max=nodes[nodeindex].nsucc;
                 }
             }
             previousnodeindex=nodeindex;
@@ -155,51 +181,69 @@ int main(int argc, char *argv[]){
         fgets(buffer, sizeof(buffer), nodesdata);
         pch = strtoke(buffer,"|");
     }
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("The successors were read and assigned to nodes in %f CPU seconds.\n\n", local_CPU_time);
 
     fclose(nodesdata);
 
-    // Error checker (This can be commented out)
-    printf("Checking if there were errors reading the file...\n");
-    for(i=1;i<nnodes;i++){
-        if(nodes[i-1].id>nodes[i].id)
-            ExitError("The nodes id's are not sorted in ascending order. That's necessary to perform binary search.", 32);//This checks that the ID's are sorted (necessary to perform binary search)
-    }
-    
-    // We print the nodes with at least one successor to control if it works
-    printf("Printing the nodes with at least one successors:\n");
-    for(i=0;i<nnodes;i++){
-        if(nodes[i].nsucc != 0U && strcmp(nodes[i].name, (char*)"")){
-            printf("Id=%010ld Lat=%lf Long=%lf Number_of_successorss=%d Id_of_successor_1=%lu Name=%s\n",nodes[i].id,nodes[i].lat,nodes[i].lon,nodes[i].nsucc,nodes[i].successors[0], nodes[i].name);
-        }
-    }
-
+    printf("Writing the formatted graph...\n");
+    local_time=clock();
     // Writes the binary file with the formatted graph, names and successors are writen in a single vector and need to be reasigned with pointers when reading.
     FILE *fin;
 
-    /* Computing the total number of successors */
+    // Computing the total number of successors
     unsigned long ntotnsucc=0UL;
     for(i=0UL; i < nnodes; i++) ntotnsucc += nodes[i].nsucc;
-    /* Computing the total number of characters in names */
+    // Computing the total number of characters in names
     unsigned long ntotnamechar=0UL;
     for(i=0UL; i < nnodes; i++) ntotnamechar += strlen(nodes[i].name)+1;
-    /* Setting the name of the binary file */
-    if ((fin = fopen ("Graph.bin", "wb")) == NULL)
+    // Setting the name of the binary file
+    char *binary_file_name = argv[2];
+    strcat(binary_file_name, ".bin");
+    if ((fin = fopen (binary_file_name, "wb")) == NULL)
         ExitError("the output binary data file cannot be opened", 31);
-    /* Global data −−− header */
+    // Global data −−− header 
     if( fwrite(&nnodes, sizeof(unsigned long), 1, fin) + fwrite(&ntotnsucc, sizeof(unsigned long), 1, fin) + fwrite(&ntotnamechar, sizeof(unsigned long), 1, fin)!= 3 )
         ExitError("when initializing the output binary data file", 32);
-    /* Writing all nodes */
+    // Writing all nodes 
     if( fwrite(nodes, sizeof(node), nnodes, fin) != nnodes )
         ExitError("when writing nodes to the output binary data file", 32);
-    /* Writing sucessors in blocks */
+    // Writing sucessors in blocks 
     for(i=0UL; i < nnodes; i++)if(nodes[i].nsucc)if( fwrite(nodes[i].successors, sizeof(unsigned long), nodes[i].nsucc, fin) != nodes[i].nsucc )
         ExitError("when writing edges to the output binary data file", 32);
-    /* Writing names in blocks */
+    // Writing names in blocks
     for(i=0UL; i < nnodes; i++)if( fwrite(nodes[i].name, sizeof(char), strlen(nodes[i].name)+1, fin) != strlen(nodes[i].name)+1)
         ExitError("when writing edges to the output binary data file", 32);
 
     fclose(fin);
+
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    global_CPU_time = (double)(clock()-global_time)/CLOCKS_PER_SEC;
+    printf("The graph was written into %s in %f CPU seconds. You can now execute the program './Astar %s'\n\n", binary_file_name, local_CPU_time, binary_file_name);
+
+    unsigned long valence[nsucc_max];
+    double mean_valence = 0;
+
+    for(i=0UL;i<=nsucc_max;i++)valence[i]=0UL;
+    for(i=0;i<nnodes;i++)valence[nodes[i].nsucc]++;
+    for(i=0UL;i<=nsucc_max;i++)
+    {
+        printf("Nodes with valence %lu: %lu\n",i, valence[i]);
+        mean_valence += i*valence[i];
+    }
+    mean_valence/=nnodes;
+
+    printf("\nThe graph has a maximum valence of %u and the mean valence is %f. \n", nsucc_max, mean_valence);
+    printf("The total computation time to build and write the graph with summary data was %f CPU seconds.\n\n", global_CPU_time);
+    printf("Freeing allocated memory...\n");
+    for(i=0UL;i<nnodes;i++)
+    {
+        free(nodes[i].name);
+        free(nodes[i].successors);
+    }
     free(nodes);
+
+    printf("You can now execute the program './Astar %s'\n\n", argv[2]);
 
     return 0;
 }
