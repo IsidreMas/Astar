@@ -1,3 +1,5 @@
 maps_data/spain.csv
 maps_data/cataluna.csv
-Graph.bin
+spain_graph.bin
+graph_builder
+Astar
