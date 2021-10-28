@@ -1,69 +1,60 @@
 # include "functions.h"
 
-void Dijkstra(node *nodes, unsigned nnodes, unsigned index_origin, unsigned index_destination)
-{
-    bool *expanded;
-    double *dist, dist_aux;
-    unsigned *parent, i, node_min;
+typedef struct DijkstraState{
+  double *g;
+  unsigned *parent;
+  bool *expanded;
+} DijkstraState;
 
-    if((expanded = (bool *) malloc(nnodes*sizeof(bool)) ) == NULL)
+DijkstraState Dijkstra(node *nodes, unsigned nnodes, unsigned index_origin, unsigned index_destination)
+{
+    DijkstraState s;
+    double dist_aux;
+    unsigned i, node_min;
+
+    if((s.expanded = (bool *) malloc(nnodes*sizeof(bool)) ) == NULL)
         ExitError("when allocating memory for expanded vector", 15);
-    if((dist = (double *) malloc(nnodes*sizeof(double)) ) == NULL)
+    if((s.g = (double *) malloc(nnodes*sizeof(double)) ) == NULL)
         ExitError("when allocating memory for dist vector", 15);
-    if((parent = (unsigned *) malloc(nnodes*sizeof(unsigned)) ) == NULL)
+    if((s.parent = (unsigned *) malloc(nnodes*sizeof(unsigned)) ) == NULL)
         ExitError("when allocating memory for parent vector", 15);
 
     for(i=0u; i<nnodes; i++)
     {
-        expanded[i]=false;
-        dist[i]=INFINITY;
+        s.expanded[i]=false;
+        s.g[i]=INFINITY;
     }
-    parent[index_origin]=nnodes;
-    dist[index_origin]=0.0;
+    s.parent[index_origin]=nnodes;
+    s.g[index_origin]=0.0;
     
     Heap *Pq = CreateHeap(nnodes);
-    insert(Pq, dist[index_origin], index_origin);
+    insert(Pq, s.g[index_origin], index_origin);
 
     while(Pq->count!=0)
     {
         node_min = PopMin(Pq);
-        expanded[node_min]=true;
+        s.expanded[node_min]=true;
 
         if(node_min == index_destination)break;
 
         for(i=0; i<nodes[node_min].nsucc; i++)
         {
-            if(!expanded[nodes[node_min].successors[i]])
+            if(!s.expanded[nodes[node_min].successors[i]])
             {
-                dist_aux = dist[node_min] 
+                dist_aux = s.g[node_min] 
                 + get_distance(nodes[node_min].lat, nodes[node_min].lon, nodes[nodes[node_min].successors[i]].lat, nodes[nodes[node_min].successors[i]].lon);
-                if(dist[nodes[node_min].successors[i]]>dist_aux)
+                if(s.g[nodes[node_min].successors[i]]>dist_aux)
                 {
-                    if(dist[nodes[node_min].successors[i]]==INFINITY)insert(Pq, dist_aux, nodes[node_min].successors[i]);
+                    if(s.g[nodes[node_min].successors[i]]==INFINITY)insert(Pq, dist_aux, nodes[node_min].successors[i]);
                     else decreasePriority(Pq, dist_aux, nodes[node_min].successors[i]);
-                    dist[nodes[node_min].successors[i]] = dist_aux;
-                    parent[nodes[node_min].successors[i]] = node_min;
+                    s.g[nodes[node_min].successors[i]] = dist_aux;
+                    s.parent[nodes[node_min].successors[i]] = node_min;
                 }
             }
         }
     }
-    node_min = index_destination;
-    FILE *channeltofile;
     
-    channeltofile = fopen("Dijkstra_output.txt","w"); // "w" means "write"
-    if(channeltofile == NULL){
-        printf("We cannot create the file!");
-        ExitError("The file could not be opened", 15);
-    }
-    while (parent[node_min]!=nnodes)
-    {
-        fprintf(channeltofile, "%f,%f\n", nodes[node_min].lon, nodes[node_min].lat);
-        node_min = parent[node_min];
-    }
-    fclose(channeltofile); // This file must exist now!
-
-    printf("The shortest distance is %f\n", dist[index_destination]);
-
+    return s;
 }
 
 int main (int argc, char *argv[])
@@ -76,9 +67,14 @@ int main (int argc, char *argv[])
 
     FILE *binary_file;
     unsigned long ntotnsucc, ntotnamechar;
+    clock_t local_time, global_time;
     unsigned *allsuccessors, i, nnodes;
     char *allnames;
+    double local_CPU_time, global_CPU_time;
     node *nodes;
+
+    global_time=clock();
+    local_time=clock();
 
     if ((binary_file = fopen (argv[1], "rb")) == NULL)
         ExitError("the data file does not exist or cannot be opened", 11);
@@ -115,15 +111,54 @@ int main (int argc, char *argv[])
         allnames += strlen(allnames)+1;
     }
 
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("The binary file was read in %f CPU seconds.\n\n", local_CPU_time);
+    printf("Searching indices of origin and destination...\n");
+    local_time = clock();
+
     unsigned long id_origin = strtoul(argv[2],(char **)NULL, 10), id_destination = strtoul(argv[3],(char **)NULL, 10);
-    unsigned index_origin, index_destination;
+    unsigned index_origin, index_destination, path_node;
 
     if(!binarysearch(id_origin, nodes, nnodes, &index_origin))
         ExitError("The origin ID is not in the graph", 11);
     if(!binarysearch(id_destination, nodes, nnodes, &index_destination))
         ExitError("The origin ID is not in the graph", 11);
+    
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("The indices were found in %f CPU seconds.\n\n", local_CPU_time);
 
-    Dijkstra(nodes, nnodes, index_origin, index_destination);
+    printf("Performing Dijkstra algorithm...\n");
+    local_time = clock();
+
+    DijkstraState result = Dijkstra(nodes, nnodes, index_origin, index_destination);
+
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("Astar algorithm found an optimal path in %f CPU seconds.\n\n", local_CPU_time);
+    printf("Saving results in output file...\n");
+    local_time = clock();
+
+    path_node = index_destination;
+
+    FILE *channeltofile;
+    
+    channeltofile = fopen("Dijkstra_output.txt","w"); // "w" means "write"
+    if(channeltofile == NULL){
+        printf("We cannot create the file!");
+        ExitError("The file could not be opened", 15);
+    }
+    while (result.parent[path_node]!=nnodes)
+    {
+        fprintf(channeltofile, "%f,%f\n", nodes[path_node].lon, nodes[path_node].lat);
+        path_node = result.parent[path_node];
+    }
+    fclose(channeltofile); // This file must exist now!
+
+    local_CPU_time = (double)(clock()-local_time)/CLOCKS_PER_SEC;
+    printf("The file output.txt was written in %f CPU seconds.\n\n", local_CPU_time);
+    global_CPU_time = (double)(clock()-global_time)/CLOCKS_PER_SEC;
+    printf("The total computation time was %f CPU seconds.\n\n", global_CPU_time);
+
+    printf("The shortest distance found is %f m\n", result.g[index_destination]);
 
     return 0;
 }

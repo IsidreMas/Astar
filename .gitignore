@@ -3,3 +3,6 @@ maps_data/cataluna.csv
 spain_graph.bin
 graph_builder
 Astar
+Dijkstra_output.txt
+Astar_output.txt
+Dijkstra
