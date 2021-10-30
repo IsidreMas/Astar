@@ -206,7 +206,7 @@ int main(int argc, char *argv[]){
     free(nodes);
     free(buffer);
 
-    printf("You can now execute the program './Astar %s'\n\n", argv[2]);
+    printf("You can now execute the program './source/Astar.exe %s [ORIGIN_ID] [DESTINATION_ID]' \n\n", argv[2]);
 
     return 0;
 }
