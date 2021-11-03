@@ -7,16 +7,18 @@ helpFunction()
    echo -e "\t-o Origin ID"
    echo -e "\t-d Destination ID"
    echo -e "\t-a Algorithm to use (Dijkstra or Astar) Default: Astar"
+   echo -e "\t-c Color of the path"
    exit 1 # Exit script after printing help
 }
 
-while getopts "f:o:d:a:" opt
+while getopts "f:o:d:a:c:" opt
 do
    case "$opt" in
       f ) map_name="$OPTARG" ;;
       o ) origin_id="$OPTARG" ;;
       d ) destination_id="$OPTARG" ;;
       a ) algorithm="$OPTARG" ;;
+      c ) color="$OPTARG" ;;
       ? ) helpFunction ;; # Print helpFunction in case parameter is non-existent
    esac
 done
@@ -56,7 +58,7 @@ else
     ./source/Astar.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
 fi
 
- Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${origin_id-240949599} ${destination_id-195977239}
+ Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${origin_id-240949599} ${destination_id-195977239} ${color-red}
 
  open ./plots/${algorithm-Astar}_${origin_id-240949599}_${destination_id-195977239}.html
  
