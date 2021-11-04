@@ -26,10 +26,6 @@ done
 # Print helpFunction in case parameters are empty
 map_name=${map_name-spain.csv}
 # Begin script in case all parameters are correct
-echo $map_name
-echo "${origin_id-240949599}"
-echo "${destination_id-195977239}"
-echo "${algorithm-Astar}"
 
 if [ ! -f ./source/Dijkstra.exe ]
 then
