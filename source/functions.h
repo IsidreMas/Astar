@@ -212,7 +212,7 @@ void decreasePriority(Heap *h, double distance, unsigned node_index)
         if (node_index == h->node_index[i])break;
     h->distance[i] = distance;
 
-    if(h->distance[i] < h->distance[0])return;
+    if(i==0)return;
     if (h->distance[i]<h->distance[(i-1)/2]) heapify_bottom_top(h, i);
     else heapify_top_bottom(h, (i-1)/2);
 }
