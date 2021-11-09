@@ -70,7 +70,7 @@ int main (int argc, char *argv[])
     clock_t local_time, global_time;
     unsigned long ntotnsucc, ntotnamechar;
     unsigned *allsuccessors, i, nnodes;
-    char *allnames;
+    char *allnames, *item;
     double local_CPU_time, global_CPU_time;
     node *nodes;
 
@@ -116,7 +116,27 @@ int main (int argc, char *argv[])
     printf("The binary file was read in %f CPU seconds.\n\n", local_CPU_time);
     printf("Searching indices of origin and destination...\n");
     local_time = clock();
-    unsigned long id_origin = strtoul(argv[2],(char **)NULL, 10), id_destination = strtoul(argv[3],(char **)NULL, 10);
+
+    unsigned long id_origin, id_destination;
+    double lat, lon;
+    if(strchr(argv[2], ',') == NULL)id_origin = strtoul(argv[2],(char **)NULL, 10);
+    else
+    {
+        item = strtoke(argv[2],",");
+        lat = atof(item);
+        item = strtoke(NULL,",");
+        lon = atof(item);
+        id_origin = get_node(lat,lon,nodes, nnodes);
+    }
+    if(strchr(argv[3],',') == NULL)id_destination = strtoul(argv[3],(char **)NULL, 10);
+    else
+    {
+        item = strtoke(argv[3],", ");
+        lat = atof(item);
+        item = strtoke(NULL,", ");
+        lon = atof(item);
+        id_destination = get_node(lat, lon,nodes, nnodes);
+    }
     unsigned index_origin, index_destination, path_node;
 
     if(!binarysearch(id_origin, nodes, nnodes, &index_origin))
@@ -135,9 +155,13 @@ int main (int argc, char *argv[])
     local_time = clock();
     path_node = index_destination;
     FILE *channeltofile;
+    FILE *info;
     char *results_name;
-    
-    asprintf(&results_name,"./results/Astar_%s_%s.csv",argv[2], argv[3]);
+
+    info = fopen("temporary_id.txt","w");
+    fprintf(info, "id_origin=%lu\nid_destination=%lu", id_origin, id_destination);
+    fclose(info);
+    asprintf(&results_name,"./results/Astar_%lu_%lu.csv",id_origin, id_destination);
     
     channeltofile = fopen(results_name,"w"); // "w" means "write"
     if(channeltofile == NULL){
