@@ -25,6 +25,20 @@ double get_distance(double lat1, double lon1, double lat2, double lon2)
     
     return R * 2 * atan2(sqrt(a), sqrt(1-a));
 }
+
+unsigned long get_node(double lat, double lon, node nodes[], unsigned nnodes)
+{
+    unsigned long id;
+    double test_distance, min_distance = INFINITY;
+    for(int i=0; i<nnodes; i++)
+        if((test_distance = get_distance(lat, lon, nodes[i].lat, nodes[i].lon))<min_distance && nodes[i].nsucc!=0)
+        {
+            min_distance = test_distance;
+            id = nodes[i].id;
+        }
+    return id;
+}
+
 //Performs binary search in the id's of the node structure and stores the value of the index in a pointer. Returns true if the id is found or false otherwise.
 bool binarysearch(unsigned long ident, node l[], unsigned n, unsigned *index)
 {

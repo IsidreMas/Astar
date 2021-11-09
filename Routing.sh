@@ -54,7 +54,11 @@ else
     ./source/Astar.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
 fi
 
- Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${origin_id-240949599} ${destination_id-195977239} ${color-red}
+source "temporary_id.txt"
 
- open ./plots/${algorithm-Astar}_${origin_id-240949599}_${destination_id-195977239}.html
+Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
+
+open ./plots/${algorithm-Astar}_${id_origin}_${id_destination}.html
+
+rm temporary_id.txt
  
