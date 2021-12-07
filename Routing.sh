@@ -29,17 +29,17 @@ map_name=${map_name-spain.csv}
 
 if [ ! -f ./source/Dijkstra.exe ]
 then
-    gcc -Wall -o ./source/Dijkstra.exe ./source/Dijkstra.c -Ofast
+    gcc -Wall -o ./source/Dijkstra.exe ./source/Dijkstra.c ./source/functions.c -Ofast
 fi
 
 if [ ! -f ./source/Astar.exe ]
 then
-    gcc -Wall -o ./source/Astar.exe ./source/Astar.c -Ofast
+    gcc -Wall -o ./source/Astar.exe ./source/Astar.c ./source/functions.c -Ofast
 fi
 
 if [ ! -f ./source/graph_builder.exe ]
 then
-    gcc -Wall -o ./source/graph_builder.exe ./source/graph_builder.c -Ofast
+    gcc -Wall -o ./source/graph_builder.exe ./source/graph_builder.c ./source/functions.c -Ofast
 fi
 
 if [ ! -f ./binaries/${map_name%.*}_graph.bin ]
