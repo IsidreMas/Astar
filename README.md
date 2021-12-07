@@ -7,7 +7,7 @@ The assignment consists in computing an optimal path (according to distance) fro
 
 This docucument will only explain the repository structure and operation of the program. For a detailed explanation of the methods used to develop the program a report has also been compiled as part of this assignment.
 
-##Operation
+# Operation
 
 
 
