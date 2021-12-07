@@ -15,5 +15,11 @@ Before executing the program for the first time the datasets with the format spe
 
 bash Routing.sh
 
+If everything went well the program will build the graph, perform Astar algorithm and disiplay the solution on an interactive map. On subsequent executions it will be much faster since the graph will be already built. Additionally the following parameters can be tweked to control the program execution:
 
+-f: Name of the map to be used. By default is spain.csv
+-o: Origin node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 240949599.
+-d: Destination node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 195977239.
+-a: Algorithm to use, either Dijkstra or Astar. By default is set to Astar.
+-c: Color to draw the solution route in the leaflet plot. By default is set to red.
 
