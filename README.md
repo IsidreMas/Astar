@@ -28,5 +28,9 @@ An example execution with all the mentioned arguments would look like this:
 
 `bash Routing.sh -f cataluna.csv -o 41.61733,0.62554 -d 240949599 -a Dijkstra -c blue`
 
+Be careful when specifying latitude and longitude, as there should not be any space after the coma and a point should be used to mark decimals.
+
+That's all.
+
 
 
