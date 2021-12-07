@@ -13,13 +13,13 @@ The program was tested in a MacBook Air M1 using Mac OS, compatibility with othe
 
 Before executing the program for the first time the datasets with the format specified in the description of the problem must be placed in the folder "./maps_data", by default the program will open the dataset "./maps_data/spain.csv". The next and final step to get the default results is execute the bash script named Routing.sh with the following command:
 
-bash Routing.sh
+`bash Routing.sh`
 
 If everything went well the program will build the graph, perform Astar algorithm and disiplay the solution on an interactive map. On subsequent executions it will be much faster since the graph will be already built. Additionally the following parameters can be tweked to control the program execution:
 
--f: Name of the map to be used. By default is spain.csv
--o: Origin node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 240949599.
--d: Destination node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 195977239.
--a: Algorithm to use, either Dijkstra or Astar. By default is set to Astar.
--c: Color to draw the solution route in the leaflet plot. By default is set to red.
+1. -f: Name of the map to be used. By default is spain.csv
+2. -o: Origin node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 240949599.
+3. -d: Destination node. The argument can be a valid node ID or coordinates in the format "LAT,LON". By default is set to the node ID 195977239.
+4. -a: Algorithm to use, either Dijkstra or Astar. By default is set to Astar.
+5. -c: Color to draw the solution route in the leaflet plot. By default is set to red.
 
