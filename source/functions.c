@@ -1,6 +1,5 @@
 # include "functions.h"
 
-//Returns the distance between two coordinates using Haversine formula.
 double get_distance(double lat1, double lon1, double lat2, double lon2)
 {
     double const R = 6371e3;
@@ -13,7 +12,7 @@ double get_distance(double lat1, double lon1, double lat2, double lon2)
     return R * 2 * atan2(sqrt(a), sqrt(1-a));
 }
 
-unsigned long get_node(double lat, double lon, node nodes[], unsigned nnodes)
+unsigned long get_node(double lat, double lon, node *nodes, unsigned nnodes)
 {
     unsigned long id;
     double test_distance, min_distance = INFINITY;
@@ -26,8 +25,8 @@ unsigned long get_node(double lat, double lon, node nodes[], unsigned nnodes)
     return id;
 }
 
-//Performs binary search in the id's of the node structure and stores the value of the index in a pointer. Returns true if the id is found or false otherwise.
-bool binarysearch(unsigned long ident, node l[], unsigned n, unsigned *index)
+
+bool binarysearch(unsigned long ident, node *l, unsigned n, unsigned *index)
 {
     int middle, start = 0, end = n-1;
     while (start <= end)
@@ -45,13 +44,13 @@ bool binarysearch(unsigned long ident, node l[], unsigned n, unsigned *index)
     }
     return false;
 }
-// Handles errors and exits the program in case of one.
+
 void ExitError(const char *miss, int errcode)
 {
     fprintf (stderr, "\nERROR: %s.\nStopping...\n\n", miss);
     exit(errcode);
 }
-// Works as strtok() but returns an empty string (instead of NULL) when the field is empty.
+
 char* strtoke(char *str, const char *delim)
 {
   static char *start = NULL;
@@ -63,7 +62,7 @@ char* strtoke(char *str, const char *delim)
   if (start) *start++ = '\0';
   return token;
 }
-// Calculates and prints the valence distribution togheter with the maximum and mean valence.
+
 void valence_distribution(unsigned short nsucc_max, unsigned nnodes, node nodes[])
 {
     unsigned valence[nsucc_max], i;
@@ -80,7 +79,7 @@ void valence_distribution(unsigned short nsucc_max, unsigned nnodes, node nodes[
 
     printf("\nThe graph has a maximum valence of %u and the mean valence is %f. \n", nsucc_max, mean_valence);
 }
-//Prints the nodes with at least one successor and non-empty name.
+
 void print_nodes_sample(unsigned nnodes, node nodes[])
 {   
     unsigned i;
