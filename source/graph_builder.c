@@ -4,7 +4,7 @@ int main(int argc, char *argv[]){
     FILE *nodesdata;
     node *nodes;
     clock_t local_time, global_time;
-    size_t bufsize = 0;
+    size_t bufsize = 1000;
     unsigned nnodes=0UL,i, field;
     char *buffer, *item;
     double local_CPU_time, global_CPU_time;
@@ -55,12 +55,13 @@ int main(int argc, char *argv[]){
             if(field == 2U)
             {
                 nodes[i].id = strtoul(item,(char **)NULL, 10);
+                printf("Reading node %u from %u with id %lu\n",i,nnodes,nodes[i].id);
                 if(i>0U && nodes[i-1].id>nodes[i].id)
                     ExitError("The nodes id's are not sorted in ascending order. That's necessary to perform binary search.", 32);
             }
             if(field == 3U)
             {   
-                if((nodes[i].name = (char *) malloc(strlen(item)*sizeof(char))) == NULL)
+                if((nodes[i].name = (char *) malloc((strlen(item)+1)*sizeof(char))) == NULL)
                     ExitError("Couldn't allocate the memory for names", 32);
                 strcpy(nodes[i].name, item);
             }
@@ -210,5 +211,3 @@ int main(int argc, char *argv[]){
 
     return 0;
 }
-
-
