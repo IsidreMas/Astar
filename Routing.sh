@@ -49,15 +49,16 @@ fi
 
 if [ ${algorithm-Astar} == "Dijkstra" ]
 then
-    ./source/Dijkstra.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
+    ./source/Dijkstra.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${desdtination_id-195977239}
 else
     ./source/Astar.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
 fi
 
 source "temporary_id.txt"
-which Rscript
+
+"D:\Program Files (x86)\R-4.0.2\bin\Rscript.exe" ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 #Rscript ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
-Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
+#Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 open ./plots/${algorithm-Astar}_${id_origin}_${id_destination}.html
 
 rm temporary_id.txt
