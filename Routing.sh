@@ -56,7 +56,7 @@ fi
 
 source "temporary_id.txt"
 
-Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
+Rscript --vanilla ./source/plotter.r #${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 
 open ./plots/${algorithm-Astar}_${id_origin}_${id_destination}.html
 
