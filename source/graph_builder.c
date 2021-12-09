@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
             if(field == 2U)
             {
                 nodes[i].id = strtoul(item,(char **)NULL, 10);
-                printf("Reading node %u from %u with id %lu\n",i,nnodes,nodes[i].id);
+                //printf("Reading node %u from %u with id %lu\n",i,nnodes,nodes[i].id);
                 if(i>0U && nodes[i-1].id>nodes[i].id)
                     ExitError("The nodes id's are not sorted in ascending order. That's necessary to perform binary search.", 32);
             }
