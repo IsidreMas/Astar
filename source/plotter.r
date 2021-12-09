@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
 
+install.packages('leaflet')
 library(leaflet)
 library(htmlwidgets)
 
