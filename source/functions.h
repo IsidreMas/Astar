@@ -5,6 +5,8 @@
 # include <time.h>
 # include <math.h>
 
+#include "asprintf.h"
+
 typedef struct node{
 unsigned long id; // Node identification
 char *name; // Node name
@@ -239,3 +241,4 @@ void print(Heap *h){
     }
     printf("->__/\\__\n");
 }
+
