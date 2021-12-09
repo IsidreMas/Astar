@@ -55,7 +55,7 @@ else
 fi
 
 source "temporary_id.txt"
-Rscript ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
+D:/Program Files (x86)/R-4.0.2/bin/x64/Rscript.exe ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 #Rscript --vanilla ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 open ./plots/${algorithm-Astar}_${id_origin}_${id_destination}.html
 
