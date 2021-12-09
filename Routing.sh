@@ -49,7 +49,7 @@ fi
 
 if [ ${algorithm-Astar} == "Dijkstra" ]
 then
-    ./source/Dijkstra.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${desdtination_id-195977239}
+    ./source/Dijkstra.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
 else
     ./source/Astar.exe ./binaries/${map_name%.*}_graph.bin ${origin_id-240949599} ${destination_id-195977239}
 fi
