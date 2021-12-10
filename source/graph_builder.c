@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
             }
             if(field == 3U)
             {   
-                if((nodes[i].name = (char *) malloc(strlen(item)*sizeof(char))) == NULL)
+                if((nodes[i].name = (char *) malloc((strlen(item)+1)*sizeof(char))) == NULL)
                     ExitError("Couldn't allocate the memory for names", 32);
                 strcpy(nodes[i].name, item);
             }

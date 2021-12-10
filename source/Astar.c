@@ -1,4 +1,5 @@
 # include "functions.h"
+# include "asprintf.h"
 
 typedef struct AStarState{
   double *g, *h;

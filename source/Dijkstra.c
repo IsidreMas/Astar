@@ -1,4 +1,5 @@
 # include "functions.h"
+# include "asprintf.h"
 
 typedef struct DijkstraState{
   double *g;
