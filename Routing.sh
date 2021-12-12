@@ -59,5 +59,9 @@ source "temporary_id.txt"
 Rscript ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
 open ./plots/${algorithm-Astar}_${id_origin}_${id_destination}.html
 
+# This lines are needed instead of the above to execute the code in Windows 10
+# "D:\Program Files (x86)\R-4.0.2\bin\Rscript.exe" ./source/plotter.r ${algorithm-Astar} ${id_origin} ${id_destination} ${color-red}
+# start ./results/${algorithm-Astar}_${id_origin}_${id_destination}.html
+
 rm temporary_id.txt
  
