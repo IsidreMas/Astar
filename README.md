@@ -9,7 +9,7 @@ This docucument will only explain the steps to operate the program. For a detail
 
 # Operation
 
-The program was tested in a MacBook Air M1 using Mac OS, compatibility with other systems was not checked and library dependencies (mainly for the Leaflet plotting) should be figured out by the user.
+We ran the complete code on two different machines, namely a HP Laptop with a windows 10 64-bit operating system, a 16GB RAM and a  Intel(R) Core(TM) i7-8750H CPU with a clock speed of 2.21 GHz. The other machine was a MacBook Air M1 using Mac OS with a clock speed of 3.2 GHz and 8GB of RAM. 
 
 Before executing the program for the first time the datasets with the format specified in the description of the problem must be placed in the folder "./maps_data", by default the program will open the dataset "./maps_data/spain.csv". The next and final step to get the default results is execute the bash script named Routing.sh with the following command:
 
@@ -29,6 +29,8 @@ An example execution with all the mentioned arguments would look like this:
 `bash Routing.sh -f cataluna.csv -o 41.61733,0.62554 -d 240949599 -a Dijkstra -c blue`
 
 Be careful when specifying latitude and longitude, as there should not be any space after the coma and a point should be used to mark decimals.
+
+When an error concerning the Rscript in line 59 or the following line occurs one can comment these lines and uncomment the last lines of the bash file. This problem occurs due to the differences between Windows and Mac OS and might also occure using Linux. 
 
 That's all.
 
