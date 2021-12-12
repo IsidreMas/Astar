@@ -51,13 +51,12 @@ void print_nodes_sample(unsigned nnodes, node nodes[]);
 /*
 * Heap structure
 */
-struct Heap{
-    double *distance;
+typedef struct Heap{
+    double *priority;
     unsigned *node_index;
     int count;
     int capacity;
-};
-typedef struct Heap Heap;
+}Heap;
 
 /*
 * Returns an empty heap structure with a given capacity.
@@ -66,7 +65,7 @@ Heap *CreateHeap(unsigned capacity);
 /*
 *Inserts an index to the binary heap taking distance as priority value.
 */
-void insert(Heap *h, double distance, unsigned node_index);
+void insert(Heap *h, double priority, unsigned node_index);
 /*
 *Prints the heap for testing purposes.
 */
@@ -86,4 +85,4 @@ unsigned PopMin(Heap *h);
 /*
 *Updates the priority of a node_index already in the heap.
 */
-void decreasePriority(Heap *h, double distance, unsigned node_index);
+void decreasePriority(Heap *h, double priority, unsigned node_index);

@@ -47,7 +47,7 @@ AStarState Astar(node *nodes, unsigned nnodes, unsigned index_origin, unsigned i
                 dist_aux = s.g[node_min] + get_distance(nodes[node_min].lat, nodes[node_min].lon, nodes[nodes[node_min].successors[i]].lat, nodes[nodes[node_min].successors[i]].lon);
                 if(s.g[nodes[node_min].successors[i]]>dist_aux)
                 {
-                    s.h[nodes[node_min].successors[i]] = get_distance(nodes[nodes[node_min].successors[i]].lat, nodes[nodes[node_min].successors[i]].lon, nodes[index_destination].lat, nodes[index_destination].lon);
+                    s.h[nodes[node_min].successors[i]] = get_distance(nodes[nodes[node_min].successors[i]].lat, nodes[nodes[node_min].successors[i]].lon, nodes[index_destination].lat, nodes[index_destination].lon); //calculate first?
                     if(s.g[nodes[node_min].successors[i]]==INFINITY)insert(Pq, dist_aux + s.h[nodes[node_min].successors[i]], nodes[node_min].successors[i]);
                     else decreasePriority(Pq, dist_aux + s.h[nodes[node_min].successors[i]], nodes[node_min].successors[i]);
                     s.g[nodes[node_min].successors[i]] = dist_aux;
